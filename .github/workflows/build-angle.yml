@@ -38,10 +38,20 @@ jobs:
       #  run: |
       #    "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" modify --installPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" --quiet --force --norestart --add Microsoft.VisualStudio.Component.Windows11SDK.26100
 
-      - name: Run Build Script
-        id: build
-        shell: cmd
-        run: call build.cmd ${{ matrix.arch }}
+      - name: Configure Build for Static Library
+        run: |
+          cd angle
+          gn gen out/Static-${{ matrix.arch }} --args="is_debug=false target_cpu='${{ matrix.arch }}' angle_enable_static=true"
+
+      - name: Build ANGLE Static Library
+        run: |
+          cd angle
+          ninja -C out/Static-${{ matrix.arch }}
+
+      - name: Package Static Library
+        run: |
+          cd angle
+          zip -r angle-${{ matrix.arch }}-${{ env.BUILD_DATE }}.zip out/Static-${{ matrix.arch }}
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
